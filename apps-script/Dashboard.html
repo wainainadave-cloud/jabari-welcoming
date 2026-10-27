@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Little Angel | Family Dashboard</title><style>
+:root{--blue:#145fad;--navy:#12385e;--sky:#dcefff;--cream:#f8fcff;--line:#d9e9f7;--muted:#667d91}*[hidden]{display:none!important}*{box-sizing:border-box}body{margin:0;background:linear-gradient(150deg,#e7f5ff,#fff 55%,#eaf4fd);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;color:#18334b}.wrap{max-width:1220px;margin:auto;padding:24px 18px}.head{display:flex;justify-content:space-between;align-items:center;gap:20px}.head h1{font:600 clamp(2rem,4vw,3.2rem) Georgia,serif;margin:0;color:var(--navy)}h2{font:600 1.7rem Georgia,serif;color:var(--navy)}.muted{color:var(--muted)}.panel{border-radius:22px;padding:20px;background:rgba(255,255,255,.78);border:1px solid #fff;box-shadow:0 14px 42px #164d7d16;backdrop-filter:blur(16px);margin-top:18px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric{border-radius:17px;background:linear-gradient(145deg,#fff,#eaf6ff);border:1px solid var(--line);padding:18px}.metric b{font-size:1.85rem;color:var(--blue);display:block}.metric span{font-size:.84rem;color:var(--muted)}button,a.action{font:inherit;cursor:pointer;display:inline-block;border:1px solid #bcd6eb;background:white;color:var(--navy);border-radius:12px;padding:10px 14px;text-decoration:none;font-weight:700}.primary{background:var(--blue);color:white;border-color:var(--blue)}input,select{font:inherit;padding:11px;border-radius:12px;border:1px solid #c9dcea;width:100%}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.hidden{display:none!important}.search{max-width:320px}.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;white-space:nowrap}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid #e6f0f8}th{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:#657f95}td{font-size:.91rem}td.note{white-space:normal;max-width:260px;min-width:130px}.tabs{display:flex;gap:7px;margin-top:16px}.tabs button.active{background:var(--blue);color:#fff}#login{max-width:420px;margin:12vh auto}#login h1{font:600 2.7rem Georgia,serif;color:var(--navy)}#login button{width:100%;margin-top:12px}.pill{border-radius:999px;padding:4px 9px;font-size:.75rem;font-weight:800;background:#ecf4fb;color:var(--navy)}.good{background:#e5f7ed;color:#23764b}.warn{background:#fff2dd;color:#a9681d}.error{color:#a42e40}.helper{font-size:.82rem;color:var(--muted)}@media(max-width:820px){.cards{grid-template-columns:repeat(2,1fr)}.head{align-items:flex-start;flex-direction:column}}@media(max-width:420px){.wrap{padding:14px}.metric b{font-size:1.4rem}.cards{gap:8px}.metric{padding:14px}}
+</style></head><body>
+
+<main class="wrap" id="dashboard"><header class="head"><div><div class="muted">THE GITHUKA FAMILY · PRIVATE VIEW</div><h1>Jabari's Celebration</h1><div class="muted">Saturday, 5 December 2026 · Waka Waka Garden, Karen</div></div><div class="actions"><button id="refresh">Refresh</button><button onclick="google.script.host.close()">Close</button></div></header>
+<div class="cards" id="cards"><div class="metric"><b>—</b><span>Responses</span></div></div>
+<section class="panel"><div class="head"><div><h2 id="tableTitle">RSVP Responses</h2><p class="muted" id="tableSub">Search and export guest responses</p></div><div class="actions"><input class="search" id="search" placeholder="Search names, phone, gifts…" aria-label="Search entries"><button id="export">Export CSV</button></div></div><div class="tabs"><button data-tab="rsvps" class="active">RSVPs</button></div><div class="scroll"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div><p class="helper">Private Google account access is required. M-Pesa is disabled; no payment totals are collected.</p></section>
+</main><script>
+const $=id=>document.getElementById(id);let rows=[];
+function render(){
+ const q=$('search').value.toLowerCase();
+ $('thead').replaceChildren();$('tbody').replaceChildren();
+ const headers=['Name','Phone','Attendance','Guests','Message','Submitted'];
+ const hr=document.createElement('tr');headers.forEach(t=>{const el=document.createElement('th');el.textContent=t;hr.append(el)});$('thead').append(hr);
+ const filtered=rows.filter(r=>Object.values(r).some(v=>String(v).toLowerCase().includes(q)));
+ filtered.forEach(r=>{const tr=document.createElement('tr');[r.full_name,r.phone,r.attending,r.guests,r.note,r.created_at].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});$('tbody').append(tr)});
+ if(!filtered.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent='No matching responses.';tr.append(td);$('tbody').append(tr)}
+ const stats=[['Responses',rows.length],['Expected guests',rows.filter(r=>r.attending==='yes').reduce((s,r)=>s+Number(r.guests),0)],['Maybe responses',rows.filter(r=>r.attending==='maybe').length],['Not attending',rows.filter(r=>r.attending==='no').length]];
+ $('cards').replaceChildren(...stats.map(([label,n])=>{const el=document.createElement('div');el.className='metric';const b=document.createElement('b'),s=document.createElement('span');b.textContent=n;s.textContent=label;el.append(b,s);return el}));
+}
+function load(){
+ $('refresh').disabled=true;$('tableSub').textContent='Loading private responses…';
+ google.script.run.withSuccessHandler(data=>{rows=data;render();$('refresh').disabled=false;$('tableSub').textContent='Updated '+new Date().toLocaleTimeString();})
+ .withFailureHandler(()=>{rows=[];render();$('refresh').disabled=false;$('tableSub').textContent='Unable to load. Open from the private Google Sheet and sign in.';}).getDashboardData();
+}
+$('refresh').onclick=load;$('search').oninput=render;
+$('export').onclick=()=>{
+ const keys=['full_name','phone','attending','guests','note','created_at'];
+ const cell=v=>'"'+String(v??'').replace(/^[\s]*[=+@-]/,"'$&").replace(/"/g,'""')+'"';
+ const text=[keys,...rows.map(r=>keys.map(k=>r[k]))].map(r=>r.map(cell).join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob(['\ufeff'+text],{type:'text/csv;charset=utf-8'}));
+ const link=document.createElement('a');link.href=url;link.download='jabari-rsvps.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};load();
+</script></body></html>
