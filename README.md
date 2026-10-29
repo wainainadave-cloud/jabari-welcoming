@@ -4,7 +4,11 @@ Existing invitation design retained from the user's Downloads project. Event: 5 
 
 ## Current state
 
-Prepared locally, not deployed. No real RSVP persistence or browser CORS behavior has been verified. The test suite uses a simulated Apps Script/Sheet runtime. GitHub connection is pending; the Google Drive connector returned an unavailable-tool error. No account credentials have been saved.
+Live at https://wainainadave-cloud.github.io/jabari-welcoming/. GitHub Pages uses the Actions workflow. The Google Apps Script backend is deployed and connected through public/config.js. On 29 October 2026, a labelled SYSTEM TEST response was submitted through the live website, acknowledged successfully, and read back in the private family dashboard (not attending, zero guests). The Sheet's sharing dialog was verified as Restricted with only the owner listed. The test row remains clearly labelled. M-Pesa remains disabled. No account credentials have been saved.
+
+Open the private Sheet in its owner Google account, then choose **Jabari Family → Open dashboard**. The dashboard shows responses, expected guests, attendance, search and CSV export. It has no public web route. The direct Sheet link is kept out of this public repository.
+
+The automated suite passes eight tests in a simulated Apps Script/Sheet runtime. Live save acknowledgment, redirect/CORS behavior and dashboard readback were also verified; an independent signed-out submission and lost-response browser retry are not yet verified.
 
 ## Communication
 
